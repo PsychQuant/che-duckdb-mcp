@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-03-07
+
+### Changed
+- Upgrade DuckDB engine from v1.1.3 to v1.5.0-dev (supports storage format v1.0 ~ v1.5)
+- Upgrade MCP Swift SDK from 0.10.2 to 0.11.0
+- Switch `duckdb-swift` dependency to `branch: "main"` for latest engine
+
+### Fixed
+- Fix `DuckDB.DatabaseError error 5` when opening databases created with DuckDB v1.2+
+
 ## [1.0.0] - 2025-01-19
 
 ### Added

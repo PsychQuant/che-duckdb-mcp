@@ -166,9 +166,9 @@ id,name
 
 ## Technical Details
 
-- **Current Version**: v1.0.0
-- **Framework**: [MCP Swift SDK](https://github.com/modelcontextprotocol/swift-sdk) v0.10.0
-- **DuckDB Binding**: [duckdb-swift](https://github.com/duckdb/duckdb-swift)
+- **Current Version**: v1.1.0
+- **Framework**: [MCP Swift SDK](https://github.com/modelcontextprotocol/swift-sdk) v0.11.0
+- **DuckDB Binding**: [duckdb-swift](https://github.com/duckdb/duckdb-swift) (main branch, ~v1.5.0-dev)
 - **Transport**: stdio
 - **Platform**: macOS 13.0+ (Ventura and later)
 - **Tools**: 14 tools (8 documentation + 6 database)

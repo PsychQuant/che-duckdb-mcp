@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "che-duckdb-mcp",
   "display_name": "DuckDB Documentation & Database",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Integrated MCP server for DuckDB documentation search and database operations",
   "long_description": "A powerful MCP server combining DuckDB documentation search with native database operations. Features 8 documentation tools for searching functions, syntax, and guides, plus 6 database tools for connecting, querying, and managing DuckDB databases. Supports JSON, Markdown, and CSV output formats.",
   "author": {
