@@ -1,0 +1,824 @@
+# docs-search Specification
+
+## Purpose
+
+TBD - created by archiving change 'v2-upgrade'. Update Purpose after archive.
+
+## Requirements
+
+### Requirement: TF-IDF weighted search scoring
+
+The search engine SHALL compute relevance scores using TF-IDF (Term Frequency–Inverse Document Frequency) weighting. Each document section SHALL have a pre-computed TF-IDF vector built at documentation load time. Search results SHALL be ranked by cosine similarity between the query vector and document vectors.
+
+#### Scenario: Search returns results ranked by relevance
+
+- **WHEN** user calls `search_docs` with query "read_csv options"
+- **THEN** sections containing both "read_csv" and "options" SHALL rank higher than sections containing only one term
+- **AND** the `score` field in each result SHALL reflect TF-IDF weighted relevance
+
+#### Scenario: Inverted index is built on documentation load
+
+- **WHEN** documentation is loaded or refreshed via `refresh_docs`
+- **THEN** an inverted index SHALL be constructed mapping each normalized term to the list of sections containing it
+- **AND** subsequent searches SHALL use the index instead of scanning all sections
+
+
+<!-- @trace
+source: v2-upgrade
+updated: 2026-04-12
+code:
+  - .agents/skills/spectra-discuss/SKILL.md
+  - .remember/logs/autonomous/save-202136.log
+  - .remember/logs/autonomous/save-192925.log
+  - .remember/logs/autonomous/save-202126.log
+  - .remember/logs/autonomous/save-202251.log
+  - .remember/logs/autonomous/save-192859.log
+  - .remember/logs/autonomous/save-202543.log
+  - .remember/logs/autonomous/save-192947.log
+  - .remember/logs/autonomous/save-202257.log
+  - .remember/logs/autonomous/save-202523.log
+  - .remember/logs/autonomous/save-202642.log
+  - .remember/logs/autonomous/save-202824.log
+  - .remember/logs/autonomous/save-202513.log
+  - .remember/logs/autonomous/save-202900.log
+  - Sources/CheDuckDBMCP/DocsManager/DocsManager.swift
+  - .remember/logs/autonomous/save-200916.log
+  - .remember/logs/autonomous/save-202450.log
+  - .remember/logs/autonomous/save-200228.log
+  - .remember/logs/autonomous/save-202638.log
+  - .remember/logs/autonomous/save-201116.log
+  - .remember/logs/autonomous/save-193024.log
+  - .remember/logs/autonomous/save-201953.log
+  - .remember/logs/autonomous/save-200356.log
+  - .remember/logs/autonomous/save-200607.log
+  - .remember/logs/autonomous/save-200743.log
+  - .remember/logs/autonomous/save-202659.log
+  - .agents/skills/spectra-archive/SKILL.md
+  - .remember/logs/autonomous/save-201907.log
+  - .remember/logs/autonomous/save-193027.log
+  - .remember/logs/autonomous/save-200518.log
+  - .remember/logs/autonomous/save-202654.log
+  - .remember/logs/autonomous/save-202816.log
+  - .remember/logs/autonomous/save-194035.log
+  - .remember/logs/autonomous/save-200903.log
+  - .remember/logs/autonomous/save-200511.log
+  - .remember/logs/autonomous/save-201147.log
+  - .remember/logs/autonomous/save-203224.log
+  - .remember/logs/autonomous/save-202116.log
+  - .remember/logs/autonomous/save-200105.log
+  - .remember/logs/autonomous/save-200448.log
+  - .remember/logs/autonomous/save-200549.log
+  - .remember/logs/autonomous/save-201504.log
+  - .remember/logs/autonomous/save-195915.log
+  - .remember/logs/autonomous/save-192943.log
+  - .remember/logs/autonomous/save-200203.log
+  - .remember/logs/autonomous/save-192908.log
+  - .remember/logs/autonomous/save-200553.log
+  - .remember/logs/autonomous/save-203202.log
+  - .remember/logs/autonomous/save-203234.log
+  - .remember/logs/autonomous/save-203351.log
+  - CHANGELOG.md
+  - .remember/logs/autonomous/save-194101.log
+  - .remember/logs/autonomous/save-195006.log
+  - Sources/CheDuckDBMCP/DatabaseManager/DatabaseManager.swift
+  - Sources/CheDuckDBMCP/Server.swift
+  - .remember/logs/autonomous/save-195031.log
+  - .remember/logs/autonomous/save-202634.log
+  - .remember/logs/autonomous/save-194112.log
+  - .remember/logs/autonomous/save-202904.log
+  - .remember/logs/autonomous/save-203217.log
+  - .remember/logs/autonomous/save-200620.log
+  - .remember/logs/autonomous/save-195906.log
+  - .remember/logs/autonomous/save-195911.log
+  - .remember/logs/autonomous/save-202207.log
+  - .remember/logs/autonomous/save-194051.log
+  - .remember/logs/autonomous/save-194118.log
+  - .remember/logs/autonomous/save-200403.log
+  - .remember/logs/autonomous/save-202837.log
+  - Package.swift
+  - .remember/logs/autonomous/save-201103.log
+  - .agents/skills/spectra-propose/SKILL.md
+  - .remember/logs/autonomous/save-195957.log
+  - .remember/logs/autonomous/save-192946.log
+  - .remember/logs/autonomous/save-200414.log
+  - .remember/logs/autonomous/save-192927.log
+  - .remember/logs/autonomous/save-194059.log
+  - .remember/logs/autonomous/save-194041.log
+  - .remember/tmp/save-session.pid
+  - .remember/logs/autonomous/save-202334.log
+  - AGENTS.md
+  - .remember/logs/autonomous/save-200502.log
+  - .remember/logs/autonomous/save-200658.log
+  - .remember/logs/autonomous/save-192950.log
+  - .remember/logs/autonomous/save-192920.log
+  - .remember/logs/autonomous/save-192919.log
+  - .agents/skills/spectra-ingest/SKILL.md
+  - .remember/logs/autonomous/save-194110.log
+  - .remember/logs/autonomous/save-195035.log
+  - .remember/logs/autonomous/save-195905.log
+  - .remember/logs/autonomous/save-200232.log
+  - .remember/logs/autonomous/save-200506.log
+  - .remember/logs/autonomous/save-202318.log
+  - .agents/skills/spectra-audit/SKILL.md
+  - .remember/logs/autonomous/save-200005.log
+  - .remember/logs/autonomous/save-200908.log
+  - .remember/logs/autonomous/save-203213.log
+  - .remember/logs/autonomous/save-200321.log
+  - .remember/logs/autonomous/save-200541.log
+  - .remember/logs/autonomous/save-202444.log
+  - .remember/logs/autonomous/save-202646.log
+  - .remember/logs/autonomous/save-200325.log
+  - .remember/logs/autonomous/save-202245.log
+  - .remember/logs/autonomous/save-200633.log
+  - .remember/logs/autonomous/save-201943.log
+  - .remember/logs/autonomous/save-193002.log
+  - .remember/logs/autonomous/save-200427.log
+  - .remember/logs/autonomous/save-202531.log
+  - CLAUDE.md
+  - .remember/logs/autonomous/save-202159.log
+  - .remember/logs/autonomous/save-195851.log
+  - .agents/skills/spectra-apply/SKILL.md
+  - .remember/logs/autonomous/save-202822.log
+  - .remember/logs/autonomous/save-200342.log
+  - .remember/logs/autonomous/save-201123.log
+  - .remember/logs/autonomous/save-201859.log
+  - .remember/logs/autonomous/save-201111.log
+  - .remember/logs/autonomous/save-202842.log
+  - .remember/logs/autonomous/save-203346.log
+  - .remember/logs/autonomous/save-203352.log
+  - .remember/logs/autonomous/save-200223.log
+  - .remember/logs/autonomous/save-202926.log
+  - .remember/logs/autonomous/save-193021.log
+  - .remember/logs/autonomous/save-200146.log
+  - .agents/skills/spectra-debug/SKILL.md
+  - .remember/logs/autonomous/save-200630.log
+  - .remember/logs/autonomous/save-194957.log
+  - .remember/logs/autonomous/save-200539.log
+  - Sources/CheDuckDBMCP/Version.swift
+  - .remember/logs/autonomous/save-194124.log
+  - .remember/logs/autonomous/save-194241.log
+  - .agents/skills/spectra-ask/SKILL.md
+  - .remember/logs/autonomous/save-203229.log
+  - .remember/logs/autonomous/save-200458.log
+  - .remember/logs/autonomous/save-201518.log
+  - .remember/logs/autonomous/save-201938.log
+  - .remember/logs/autonomous/save-202553.log
+  - .remember/logs/autonomous/save-200650.log
+  - .remember/logs/autonomous/save-201529.log
+  - .remember/logs/autonomous/save-195001.log
+  - .remember/logs/autonomous/save-200410.log
+  - .remember/logs/autonomous/save-201932.log
+  - .remember/logs/autonomous/save-200115.log
+  - .remember/logs/autonomous/save-202002.log
+  - .remember/logs/autonomous/save-200349.log
+  - .remember/logs/autonomous/save-200125.log
+  - .remember/logs/autonomous/save-201925.log
+  - .remember/logs/autonomous/save-202237.log
+  - .remember/logs/autonomous/save-195000.log
+  - .remember/logs/autonomous/save-200657.log
+  - .remember/logs/autonomous/save-195026.log
+  - .remember/logs/autonomous/save-200545.log
+  - .remember/logs/autonomous/save-202907.log
+  - .remember/logs/autonomous/save-200443.log
+  - .remember/logs/autonomous/save-200614.log
+  - .remember/logs/autonomous/save-200751.log
+  - .remember/logs/autonomous/save-202921.log
+  - .remember/logs/autonomous/save-200856.log
+  - .remember/logs/autonomous/save-195015.log
+  - .remember/logs/autonomous/save-200927.log
+  - .remember/logs/autonomous/save-202109.log
+  - .remember/logs/autonomous/save-200646.log
+  - .remember/logs/autonomous/save-195009.log
+  - .remember/logs/autonomous/save-195953.log
+  - .remember/logs/autonomous/save-195014.log
+  - .remember/logs/autonomous/save-202229.log
+  - .remember/logs/autonomous/save-202305.log
+  - .remember/logs/autonomous/save-200639.log
+  - .remember/logs/autonomous/save-202620.log
+  - .remember/logs/autonomous/save-200436.log
+  - .remember/logs/autonomous/save-203207.log
+  - .remember/logs/autonomous/save-201948.log
+  - .remember/logs/autonomous/save-200218.log
+  - .remember/logs/autonomous/save-200712.log
+  - .remember/logs/autonomous/save-192918.log
+  - .remember/logs/autonomous/save-192953.log
+  - .remember/logs/autonomous/save-194125.log
+  - .remember/logs/autonomous/save-202628.log
+  - .spectra.yaml
+  - Sources/CheDuckDBMCP/DocsManager/SearchEngine.swift
+-->
+
+---
+### Requirement: Fuzzy matching for function names
+
+The search engine SHALL support fuzzy matching for DuckDB function names using case-insensitive and underscore-insensitive normalization, combined with Levenshtein distance matching (threshold ≤ 2).
+
+#### Scenario: Underscore-insensitive function name matching
+
+- **WHEN** user calls `get_function_docs` with function_name "readcsv"
+- **THEN** the system SHALL match it to the documentation for `read_csv`
+
+#### Scenario: Case-insensitive function name matching
+
+- **WHEN** user calls `get_function_docs` with function_name "JSON_EXTRACT"
+- **THEN** the system SHALL match it to the documentation for `json_extract`
+
+#### Scenario: Levenshtein distance matching within threshold
+
+- **WHEN** user calls `get_function_docs` with function_name "read_csvs" (distance 1 from "read_csv")
+- **THEN** the system SHALL match it to `read_csv`
+
+#### Scenario: No match beyond Levenshtein threshold
+
+- **WHEN** user calls `get_function_docs` with function_name "completely_wrong"
+- **THEN** the system SHALL return a "Function not found" error with a suggestion to use `search_docs`
+
+
+<!-- @trace
+source: v2-upgrade
+updated: 2026-04-12
+code:
+  - .agents/skills/spectra-discuss/SKILL.md
+  - .remember/logs/autonomous/save-202136.log
+  - .remember/logs/autonomous/save-192925.log
+  - .remember/logs/autonomous/save-202126.log
+  - .remember/logs/autonomous/save-202251.log
+  - .remember/logs/autonomous/save-192859.log
+  - .remember/logs/autonomous/save-202543.log
+  - .remember/logs/autonomous/save-192947.log
+  - .remember/logs/autonomous/save-202257.log
+  - .remember/logs/autonomous/save-202523.log
+  - .remember/logs/autonomous/save-202642.log
+  - .remember/logs/autonomous/save-202824.log
+  - .remember/logs/autonomous/save-202513.log
+  - .remember/logs/autonomous/save-202900.log
+  - Sources/CheDuckDBMCP/DocsManager/DocsManager.swift
+  - .remember/logs/autonomous/save-200916.log
+  - .remember/logs/autonomous/save-202450.log
+  - .remember/logs/autonomous/save-200228.log
+  - .remember/logs/autonomous/save-202638.log
+  - .remember/logs/autonomous/save-201116.log
+  - .remember/logs/autonomous/save-193024.log
+  - .remember/logs/autonomous/save-201953.log
+  - .remember/logs/autonomous/save-200356.log
+  - .remember/logs/autonomous/save-200607.log
+  - .remember/logs/autonomous/save-200743.log
+  - .remember/logs/autonomous/save-202659.log
+  - .agents/skills/spectra-archive/SKILL.md
+  - .remember/logs/autonomous/save-201907.log
+  - .remember/logs/autonomous/save-193027.log
+  - .remember/logs/autonomous/save-200518.log
+  - .remember/logs/autonomous/save-202654.log
+  - .remember/logs/autonomous/save-202816.log
+  - .remember/logs/autonomous/save-194035.log
+  - .remember/logs/autonomous/save-200903.log
+  - .remember/logs/autonomous/save-200511.log
+  - .remember/logs/autonomous/save-201147.log
+  - .remember/logs/autonomous/save-203224.log
+  - .remember/logs/autonomous/save-202116.log
+  - .remember/logs/autonomous/save-200105.log
+  - .remember/logs/autonomous/save-200448.log
+  - .remember/logs/autonomous/save-200549.log
+  - .remember/logs/autonomous/save-201504.log
+  - .remember/logs/autonomous/save-195915.log
+  - .remember/logs/autonomous/save-192943.log
+  - .remember/logs/autonomous/save-200203.log
+  - .remember/logs/autonomous/save-192908.log
+  - .remember/logs/autonomous/save-200553.log
+  - .remember/logs/autonomous/save-203202.log
+  - .remember/logs/autonomous/save-203234.log
+  - .remember/logs/autonomous/save-203351.log
+  - CHANGELOG.md
+  - .remember/logs/autonomous/save-194101.log
+  - .remember/logs/autonomous/save-195006.log
+  - Sources/CheDuckDBMCP/DatabaseManager/DatabaseManager.swift
+  - Sources/CheDuckDBMCP/Server.swift
+  - .remember/logs/autonomous/save-195031.log
+  - .remember/logs/autonomous/save-202634.log
+  - .remember/logs/autonomous/save-194112.log
+  - .remember/logs/autonomous/save-202904.log
+  - .remember/logs/autonomous/save-203217.log
+  - .remember/logs/autonomous/save-200620.log
+  - .remember/logs/autonomous/save-195906.log
+  - .remember/logs/autonomous/save-195911.log
+  - .remember/logs/autonomous/save-202207.log
+  - .remember/logs/autonomous/save-194051.log
+  - .remember/logs/autonomous/save-194118.log
+  - .remember/logs/autonomous/save-200403.log
+  - .remember/logs/autonomous/save-202837.log
+  - Package.swift
+  - .remember/logs/autonomous/save-201103.log
+  - .agents/skills/spectra-propose/SKILL.md
+  - .remember/logs/autonomous/save-195957.log
+  - .remember/logs/autonomous/save-192946.log
+  - .remember/logs/autonomous/save-200414.log
+  - .remember/logs/autonomous/save-192927.log
+  - .remember/logs/autonomous/save-194059.log
+  - .remember/logs/autonomous/save-194041.log
+  - .remember/tmp/save-session.pid
+  - .remember/logs/autonomous/save-202334.log
+  - AGENTS.md
+  - .remember/logs/autonomous/save-200502.log
+  - .remember/logs/autonomous/save-200658.log
+  - .remember/logs/autonomous/save-192950.log
+  - .remember/logs/autonomous/save-192920.log
+  - .remember/logs/autonomous/save-192919.log
+  - .agents/skills/spectra-ingest/SKILL.md
+  - .remember/logs/autonomous/save-194110.log
+  - .remember/logs/autonomous/save-195035.log
+  - .remember/logs/autonomous/save-195905.log
+  - .remember/logs/autonomous/save-200232.log
+  - .remember/logs/autonomous/save-200506.log
+  - .remember/logs/autonomous/save-202318.log
+  - .agents/skills/spectra-audit/SKILL.md
+  - .remember/logs/autonomous/save-200005.log
+  - .remember/logs/autonomous/save-200908.log
+  - .remember/logs/autonomous/save-203213.log
+  - .remember/logs/autonomous/save-200321.log
+  - .remember/logs/autonomous/save-200541.log
+  - .remember/logs/autonomous/save-202444.log
+  - .remember/logs/autonomous/save-202646.log
+  - .remember/logs/autonomous/save-200325.log
+  - .remember/logs/autonomous/save-202245.log
+  - .remember/logs/autonomous/save-200633.log
+  - .remember/logs/autonomous/save-201943.log
+  - .remember/logs/autonomous/save-193002.log
+  - .remember/logs/autonomous/save-200427.log
+  - .remember/logs/autonomous/save-202531.log
+  - CLAUDE.md
+  - .remember/logs/autonomous/save-202159.log
+  - .remember/logs/autonomous/save-195851.log
+  - .agents/skills/spectra-apply/SKILL.md
+  - .remember/logs/autonomous/save-202822.log
+  - .remember/logs/autonomous/save-200342.log
+  - .remember/logs/autonomous/save-201123.log
+  - .remember/logs/autonomous/save-201859.log
+  - .remember/logs/autonomous/save-201111.log
+  - .remember/logs/autonomous/save-202842.log
+  - .remember/logs/autonomous/save-203346.log
+  - .remember/logs/autonomous/save-203352.log
+  - .remember/logs/autonomous/save-200223.log
+  - .remember/logs/autonomous/save-202926.log
+  - .remember/logs/autonomous/save-193021.log
+  - .remember/logs/autonomous/save-200146.log
+  - .agents/skills/spectra-debug/SKILL.md
+  - .remember/logs/autonomous/save-200630.log
+  - .remember/logs/autonomous/save-194957.log
+  - .remember/logs/autonomous/save-200539.log
+  - Sources/CheDuckDBMCP/Version.swift
+  - .remember/logs/autonomous/save-194124.log
+  - .remember/logs/autonomous/save-194241.log
+  - .agents/skills/spectra-ask/SKILL.md
+  - .remember/logs/autonomous/save-203229.log
+  - .remember/logs/autonomous/save-200458.log
+  - .remember/logs/autonomous/save-201518.log
+  - .remember/logs/autonomous/save-201938.log
+  - .remember/logs/autonomous/save-202553.log
+  - .remember/logs/autonomous/save-200650.log
+  - .remember/logs/autonomous/save-201529.log
+  - .remember/logs/autonomous/save-195001.log
+  - .remember/logs/autonomous/save-200410.log
+  - .remember/logs/autonomous/save-201932.log
+  - .remember/logs/autonomous/save-200115.log
+  - .remember/logs/autonomous/save-202002.log
+  - .remember/logs/autonomous/save-200349.log
+  - .remember/logs/autonomous/save-200125.log
+  - .remember/logs/autonomous/save-201925.log
+  - .remember/logs/autonomous/save-202237.log
+  - .remember/logs/autonomous/save-195000.log
+  - .remember/logs/autonomous/save-200657.log
+  - .remember/logs/autonomous/save-195026.log
+  - .remember/logs/autonomous/save-200545.log
+  - .remember/logs/autonomous/save-202907.log
+  - .remember/logs/autonomous/save-200443.log
+  - .remember/logs/autonomous/save-200614.log
+  - .remember/logs/autonomous/save-200751.log
+  - .remember/logs/autonomous/save-202921.log
+  - .remember/logs/autonomous/save-200856.log
+  - .remember/logs/autonomous/save-195015.log
+  - .remember/logs/autonomous/save-200927.log
+  - .remember/logs/autonomous/save-202109.log
+  - .remember/logs/autonomous/save-200646.log
+  - .remember/logs/autonomous/save-195009.log
+  - .remember/logs/autonomous/save-195953.log
+  - .remember/logs/autonomous/save-195014.log
+  - .remember/logs/autonomous/save-202229.log
+  - .remember/logs/autonomous/save-202305.log
+  - .remember/logs/autonomous/save-200639.log
+  - .remember/logs/autonomous/save-202620.log
+  - .remember/logs/autonomous/save-200436.log
+  - .remember/logs/autonomous/save-203207.log
+  - .remember/logs/autonomous/save-201948.log
+  - .remember/logs/autonomous/save-200218.log
+  - .remember/logs/autonomous/save-200712.log
+  - .remember/logs/autonomous/save-192918.log
+  - .remember/logs/autonomous/save-192953.log
+  - .remember/logs/autonomous/save-194125.log
+  - .remember/logs/autonomous/save-202628.log
+  - .spectra.yaml
+  - Sources/CheDuckDBMCP/DocsManager/SearchEngine.swift
+-->
+
+---
+### Requirement: Multi-source search result merging
+
+The search engine SHALL merge results from both `llms.txt` sections and `duckdb-docs.md` sections. Results from `llms.txt` SHALL receive a bonus score multiplier of 1.5x to prioritize concise, LLM-optimized content.
+
+#### Scenario: llms.txt results ranked above equivalent duckdb-docs.md results
+
+- **WHEN** user calls `search_docs` with a query that matches sections in both sources
+- **THEN** the `llms.txt` match SHALL appear before the `duckdb-docs.md` match when their base TF-IDF scores are equal
+
+#### Scenario: Deduplication across sources
+
+- **WHEN** both `llms.txt` and `duckdb-docs.md` contain sections with identical titles
+- **THEN** the search results SHALL deduplicate by title, keeping the higher-scored entry
+- **AND** the result SHALL indicate which source it came from via a `source` field
+
+
+<!-- @trace
+source: v2-upgrade
+updated: 2026-04-12
+code:
+  - .agents/skills/spectra-discuss/SKILL.md
+  - .remember/logs/autonomous/save-202136.log
+  - .remember/logs/autonomous/save-192925.log
+  - .remember/logs/autonomous/save-202126.log
+  - .remember/logs/autonomous/save-202251.log
+  - .remember/logs/autonomous/save-192859.log
+  - .remember/logs/autonomous/save-202543.log
+  - .remember/logs/autonomous/save-192947.log
+  - .remember/logs/autonomous/save-202257.log
+  - .remember/logs/autonomous/save-202523.log
+  - .remember/logs/autonomous/save-202642.log
+  - .remember/logs/autonomous/save-202824.log
+  - .remember/logs/autonomous/save-202513.log
+  - .remember/logs/autonomous/save-202900.log
+  - Sources/CheDuckDBMCP/DocsManager/DocsManager.swift
+  - .remember/logs/autonomous/save-200916.log
+  - .remember/logs/autonomous/save-202450.log
+  - .remember/logs/autonomous/save-200228.log
+  - .remember/logs/autonomous/save-202638.log
+  - .remember/logs/autonomous/save-201116.log
+  - .remember/logs/autonomous/save-193024.log
+  - .remember/logs/autonomous/save-201953.log
+  - .remember/logs/autonomous/save-200356.log
+  - .remember/logs/autonomous/save-200607.log
+  - .remember/logs/autonomous/save-200743.log
+  - .remember/logs/autonomous/save-202659.log
+  - .agents/skills/spectra-archive/SKILL.md
+  - .remember/logs/autonomous/save-201907.log
+  - .remember/logs/autonomous/save-193027.log
+  - .remember/logs/autonomous/save-200518.log
+  - .remember/logs/autonomous/save-202654.log
+  - .remember/logs/autonomous/save-202816.log
+  - .remember/logs/autonomous/save-194035.log
+  - .remember/logs/autonomous/save-200903.log
+  - .remember/logs/autonomous/save-200511.log
+  - .remember/logs/autonomous/save-201147.log
+  - .remember/logs/autonomous/save-203224.log
+  - .remember/logs/autonomous/save-202116.log
+  - .remember/logs/autonomous/save-200105.log
+  - .remember/logs/autonomous/save-200448.log
+  - .remember/logs/autonomous/save-200549.log
+  - .remember/logs/autonomous/save-201504.log
+  - .remember/logs/autonomous/save-195915.log
+  - .remember/logs/autonomous/save-192943.log
+  - .remember/logs/autonomous/save-200203.log
+  - .remember/logs/autonomous/save-192908.log
+  - .remember/logs/autonomous/save-200553.log
+  - .remember/logs/autonomous/save-203202.log
+  - .remember/logs/autonomous/save-203234.log
+  - .remember/logs/autonomous/save-203351.log
+  - CHANGELOG.md
+  - .remember/logs/autonomous/save-194101.log
+  - .remember/logs/autonomous/save-195006.log
+  - Sources/CheDuckDBMCP/DatabaseManager/DatabaseManager.swift
+  - Sources/CheDuckDBMCP/Server.swift
+  - .remember/logs/autonomous/save-195031.log
+  - .remember/logs/autonomous/save-202634.log
+  - .remember/logs/autonomous/save-194112.log
+  - .remember/logs/autonomous/save-202904.log
+  - .remember/logs/autonomous/save-203217.log
+  - .remember/logs/autonomous/save-200620.log
+  - .remember/logs/autonomous/save-195906.log
+  - .remember/logs/autonomous/save-195911.log
+  - .remember/logs/autonomous/save-202207.log
+  - .remember/logs/autonomous/save-194051.log
+  - .remember/logs/autonomous/save-194118.log
+  - .remember/logs/autonomous/save-200403.log
+  - .remember/logs/autonomous/save-202837.log
+  - Package.swift
+  - .remember/logs/autonomous/save-201103.log
+  - .agents/skills/spectra-propose/SKILL.md
+  - .remember/logs/autonomous/save-195957.log
+  - .remember/logs/autonomous/save-192946.log
+  - .remember/logs/autonomous/save-200414.log
+  - .remember/logs/autonomous/save-192927.log
+  - .remember/logs/autonomous/save-194059.log
+  - .remember/logs/autonomous/save-194041.log
+  - .remember/tmp/save-session.pid
+  - .remember/logs/autonomous/save-202334.log
+  - AGENTS.md
+  - .remember/logs/autonomous/save-200502.log
+  - .remember/logs/autonomous/save-200658.log
+  - .remember/logs/autonomous/save-192950.log
+  - .remember/logs/autonomous/save-192920.log
+  - .remember/logs/autonomous/save-192919.log
+  - .agents/skills/spectra-ingest/SKILL.md
+  - .remember/logs/autonomous/save-194110.log
+  - .remember/logs/autonomous/save-195035.log
+  - .remember/logs/autonomous/save-195905.log
+  - .remember/logs/autonomous/save-200232.log
+  - .remember/logs/autonomous/save-200506.log
+  - .remember/logs/autonomous/save-202318.log
+  - .agents/skills/spectra-audit/SKILL.md
+  - .remember/logs/autonomous/save-200005.log
+  - .remember/logs/autonomous/save-200908.log
+  - .remember/logs/autonomous/save-203213.log
+  - .remember/logs/autonomous/save-200321.log
+  - .remember/logs/autonomous/save-200541.log
+  - .remember/logs/autonomous/save-202444.log
+  - .remember/logs/autonomous/save-202646.log
+  - .remember/logs/autonomous/save-200325.log
+  - .remember/logs/autonomous/save-202245.log
+  - .remember/logs/autonomous/save-200633.log
+  - .remember/logs/autonomous/save-201943.log
+  - .remember/logs/autonomous/save-193002.log
+  - .remember/logs/autonomous/save-200427.log
+  - .remember/logs/autonomous/save-202531.log
+  - CLAUDE.md
+  - .remember/logs/autonomous/save-202159.log
+  - .remember/logs/autonomous/save-195851.log
+  - .agents/skills/spectra-apply/SKILL.md
+  - .remember/logs/autonomous/save-202822.log
+  - .remember/logs/autonomous/save-200342.log
+  - .remember/logs/autonomous/save-201123.log
+  - .remember/logs/autonomous/save-201859.log
+  - .remember/logs/autonomous/save-201111.log
+  - .remember/logs/autonomous/save-202842.log
+  - .remember/logs/autonomous/save-203346.log
+  - .remember/logs/autonomous/save-203352.log
+  - .remember/logs/autonomous/save-200223.log
+  - .remember/logs/autonomous/save-202926.log
+  - .remember/logs/autonomous/save-193021.log
+  - .remember/logs/autonomous/save-200146.log
+  - .agents/skills/spectra-debug/SKILL.md
+  - .remember/logs/autonomous/save-200630.log
+  - .remember/logs/autonomous/save-194957.log
+  - .remember/logs/autonomous/save-200539.log
+  - Sources/CheDuckDBMCP/Version.swift
+  - .remember/logs/autonomous/save-194124.log
+  - .remember/logs/autonomous/save-194241.log
+  - .agents/skills/spectra-ask/SKILL.md
+  - .remember/logs/autonomous/save-203229.log
+  - .remember/logs/autonomous/save-200458.log
+  - .remember/logs/autonomous/save-201518.log
+  - .remember/logs/autonomous/save-201938.log
+  - .remember/logs/autonomous/save-202553.log
+  - .remember/logs/autonomous/save-200650.log
+  - .remember/logs/autonomous/save-201529.log
+  - .remember/logs/autonomous/save-195001.log
+  - .remember/logs/autonomous/save-200410.log
+  - .remember/logs/autonomous/save-201932.log
+  - .remember/logs/autonomous/save-200115.log
+  - .remember/logs/autonomous/save-202002.log
+  - .remember/logs/autonomous/save-200349.log
+  - .remember/logs/autonomous/save-200125.log
+  - .remember/logs/autonomous/save-201925.log
+  - .remember/logs/autonomous/save-202237.log
+  - .remember/logs/autonomous/save-195000.log
+  - .remember/logs/autonomous/save-200657.log
+  - .remember/logs/autonomous/save-195026.log
+  - .remember/logs/autonomous/save-200545.log
+  - .remember/logs/autonomous/save-202907.log
+  - .remember/logs/autonomous/save-200443.log
+  - .remember/logs/autonomous/save-200614.log
+  - .remember/logs/autonomous/save-200751.log
+  - .remember/logs/autonomous/save-202921.log
+  - .remember/logs/autonomous/save-200856.log
+  - .remember/logs/autonomous/save-195015.log
+  - .remember/logs/autonomous/save-200927.log
+  - .remember/logs/autonomous/save-202109.log
+  - .remember/logs/autonomous/save-200646.log
+  - .remember/logs/autonomous/save-195009.log
+  - .remember/logs/autonomous/save-195953.log
+  - .remember/logs/autonomous/save-195014.log
+  - .remember/logs/autonomous/save-202229.log
+  - .remember/logs/autonomous/save-202305.log
+  - .remember/logs/autonomous/save-200639.log
+  - .remember/logs/autonomous/save-202620.log
+  - .remember/logs/autonomous/save-200436.log
+  - .remember/logs/autonomous/save-203207.log
+  - .remember/logs/autonomous/save-201948.log
+  - .remember/logs/autonomous/save-200218.log
+  - .remember/logs/autonomous/save-200712.log
+  - .remember/logs/autonomous/save-192918.log
+  - .remember/logs/autonomous/save-192953.log
+  - .remember/logs/autonomous/save-194125.log
+  - .remember/logs/autonomous/save-202628.log
+  - .spectra.yaml
+  - Sources/CheDuckDBMCP/DocsManager/SearchEngine.swift
+-->
+
+---
+### Requirement: Search mode support
+
+The search engine SHALL support three search modes: `title` (section titles only), `content` (body text only), and `all` (both). The default mode SHALL be `all`.
+
+#### Scenario: Title-only search
+
+- **WHEN** user calls `search_docs` with mode "title" and query "SELECT"
+- **THEN** only sections whose title contains "SELECT" SHALL be returned
+- **AND** body text matches SHALL be excluded
+
+#### Scenario: Content-only search
+
+- **WHEN** user calls `search_docs` with mode "content" and query "COPY"
+- **THEN** only sections whose body content contains "COPY" SHALL be returned
+- **AND** title-only matches SHALL be excluded
+
+<!-- @trace
+source: v2-upgrade
+updated: 2026-04-12
+code:
+  - .agents/skills/spectra-discuss/SKILL.md
+  - .remember/logs/autonomous/save-202136.log
+  - .remember/logs/autonomous/save-192925.log
+  - .remember/logs/autonomous/save-202126.log
+  - .remember/logs/autonomous/save-202251.log
+  - .remember/logs/autonomous/save-192859.log
+  - .remember/logs/autonomous/save-202543.log
+  - .remember/logs/autonomous/save-192947.log
+  - .remember/logs/autonomous/save-202257.log
+  - .remember/logs/autonomous/save-202523.log
+  - .remember/logs/autonomous/save-202642.log
+  - .remember/logs/autonomous/save-202824.log
+  - .remember/logs/autonomous/save-202513.log
+  - .remember/logs/autonomous/save-202900.log
+  - Sources/CheDuckDBMCP/DocsManager/DocsManager.swift
+  - .remember/logs/autonomous/save-200916.log
+  - .remember/logs/autonomous/save-202450.log
+  - .remember/logs/autonomous/save-200228.log
+  - .remember/logs/autonomous/save-202638.log
+  - .remember/logs/autonomous/save-201116.log
+  - .remember/logs/autonomous/save-193024.log
+  - .remember/logs/autonomous/save-201953.log
+  - .remember/logs/autonomous/save-200356.log
+  - .remember/logs/autonomous/save-200607.log
+  - .remember/logs/autonomous/save-200743.log
+  - .remember/logs/autonomous/save-202659.log
+  - .agents/skills/spectra-archive/SKILL.md
+  - .remember/logs/autonomous/save-201907.log
+  - .remember/logs/autonomous/save-193027.log
+  - .remember/logs/autonomous/save-200518.log
+  - .remember/logs/autonomous/save-202654.log
+  - .remember/logs/autonomous/save-202816.log
+  - .remember/logs/autonomous/save-194035.log
+  - .remember/logs/autonomous/save-200903.log
+  - .remember/logs/autonomous/save-200511.log
+  - .remember/logs/autonomous/save-201147.log
+  - .remember/logs/autonomous/save-203224.log
+  - .remember/logs/autonomous/save-202116.log
+  - .remember/logs/autonomous/save-200105.log
+  - .remember/logs/autonomous/save-200448.log
+  - .remember/logs/autonomous/save-200549.log
+  - .remember/logs/autonomous/save-201504.log
+  - .remember/logs/autonomous/save-195915.log
+  - .remember/logs/autonomous/save-192943.log
+  - .remember/logs/autonomous/save-200203.log
+  - .remember/logs/autonomous/save-192908.log
+  - .remember/logs/autonomous/save-200553.log
+  - .remember/logs/autonomous/save-203202.log
+  - .remember/logs/autonomous/save-203234.log
+  - .remember/logs/autonomous/save-203351.log
+  - CHANGELOG.md
+  - .remember/logs/autonomous/save-194101.log
+  - .remember/logs/autonomous/save-195006.log
+  - Sources/CheDuckDBMCP/DatabaseManager/DatabaseManager.swift
+  - Sources/CheDuckDBMCP/Server.swift
+  - .remember/logs/autonomous/save-195031.log
+  - .remember/logs/autonomous/save-202634.log
+  - .remember/logs/autonomous/save-194112.log
+  - .remember/logs/autonomous/save-202904.log
+  - .remember/logs/autonomous/save-203217.log
+  - .remember/logs/autonomous/save-200620.log
+  - .remember/logs/autonomous/save-195906.log
+  - .remember/logs/autonomous/save-195911.log
+  - .remember/logs/autonomous/save-202207.log
+  - .remember/logs/autonomous/save-194051.log
+  - .remember/logs/autonomous/save-194118.log
+  - .remember/logs/autonomous/save-200403.log
+  - .remember/logs/autonomous/save-202837.log
+  - Package.swift
+  - .remember/logs/autonomous/save-201103.log
+  - .agents/skills/spectra-propose/SKILL.md
+  - .remember/logs/autonomous/save-195957.log
+  - .remember/logs/autonomous/save-192946.log
+  - .remember/logs/autonomous/save-200414.log
+  - .remember/logs/autonomous/save-192927.log
+  - .remember/logs/autonomous/save-194059.log
+  - .remember/logs/autonomous/save-194041.log
+  - .remember/tmp/save-session.pid
+  - .remember/logs/autonomous/save-202334.log
+  - AGENTS.md
+  - .remember/logs/autonomous/save-200502.log
+  - .remember/logs/autonomous/save-200658.log
+  - .remember/logs/autonomous/save-192950.log
+  - .remember/logs/autonomous/save-192920.log
+  - .remember/logs/autonomous/save-192919.log
+  - .agents/skills/spectra-ingest/SKILL.md
+  - .remember/logs/autonomous/save-194110.log
+  - .remember/logs/autonomous/save-195035.log
+  - .remember/logs/autonomous/save-195905.log
+  - .remember/logs/autonomous/save-200232.log
+  - .remember/logs/autonomous/save-200506.log
+  - .remember/logs/autonomous/save-202318.log
+  - .agents/skills/spectra-audit/SKILL.md
+  - .remember/logs/autonomous/save-200005.log
+  - .remember/logs/autonomous/save-200908.log
+  - .remember/logs/autonomous/save-203213.log
+  - .remember/logs/autonomous/save-200321.log
+  - .remember/logs/autonomous/save-200541.log
+  - .remember/logs/autonomous/save-202444.log
+  - .remember/logs/autonomous/save-202646.log
+  - .remember/logs/autonomous/save-200325.log
+  - .remember/logs/autonomous/save-202245.log
+  - .remember/logs/autonomous/save-200633.log
+  - .remember/logs/autonomous/save-201943.log
+  - .remember/logs/autonomous/save-193002.log
+  - .remember/logs/autonomous/save-200427.log
+  - .remember/logs/autonomous/save-202531.log
+  - CLAUDE.md
+  - .remember/logs/autonomous/save-202159.log
+  - .remember/logs/autonomous/save-195851.log
+  - .agents/skills/spectra-apply/SKILL.md
+  - .remember/logs/autonomous/save-202822.log
+  - .remember/logs/autonomous/save-200342.log
+  - .remember/logs/autonomous/save-201123.log
+  - .remember/logs/autonomous/save-201859.log
+  - .remember/logs/autonomous/save-201111.log
+  - .remember/logs/autonomous/save-202842.log
+  - .remember/logs/autonomous/save-203346.log
+  - .remember/logs/autonomous/save-203352.log
+  - .remember/logs/autonomous/save-200223.log
+  - .remember/logs/autonomous/save-202926.log
+  - .remember/logs/autonomous/save-193021.log
+  - .remember/logs/autonomous/save-200146.log
+  - .agents/skills/spectra-debug/SKILL.md
+  - .remember/logs/autonomous/save-200630.log
+  - .remember/logs/autonomous/save-194957.log
+  - .remember/logs/autonomous/save-200539.log
+  - Sources/CheDuckDBMCP/Version.swift
+  - .remember/logs/autonomous/save-194124.log
+  - .remember/logs/autonomous/save-194241.log
+  - .agents/skills/spectra-ask/SKILL.md
+  - .remember/logs/autonomous/save-203229.log
+  - .remember/logs/autonomous/save-200458.log
+  - .remember/logs/autonomous/save-201518.log
+  - .remember/logs/autonomous/save-201938.log
+  - .remember/logs/autonomous/save-202553.log
+  - .remember/logs/autonomous/save-200650.log
+  - .remember/logs/autonomous/save-201529.log
+  - .remember/logs/autonomous/save-195001.log
+  - .remember/logs/autonomous/save-200410.log
+  - .remember/logs/autonomous/save-201932.log
+  - .remember/logs/autonomous/save-200115.log
+  - .remember/logs/autonomous/save-202002.log
+  - .remember/logs/autonomous/save-200349.log
+  - .remember/logs/autonomous/save-200125.log
+  - .remember/logs/autonomous/save-201925.log
+  - .remember/logs/autonomous/save-202237.log
+  - .remember/logs/autonomous/save-195000.log
+  - .remember/logs/autonomous/save-200657.log
+  - .remember/logs/autonomous/save-195026.log
+  - .remember/logs/autonomous/save-200545.log
+  - .remember/logs/autonomous/save-202907.log
+  - .remember/logs/autonomous/save-200443.log
+  - .remember/logs/autonomous/save-200614.log
+  - .remember/logs/autonomous/save-200751.log
+  - .remember/logs/autonomous/save-202921.log
+  - .remember/logs/autonomous/save-200856.log
+  - .remember/logs/autonomous/save-195015.log
+  - .remember/logs/autonomous/save-200927.log
+  - .remember/logs/autonomous/save-202109.log
+  - .remember/logs/autonomous/save-200646.log
+  - .remember/logs/autonomous/save-195009.log
+  - .remember/logs/autonomous/save-195953.log
+  - .remember/logs/autonomous/save-195014.log
+  - .remember/logs/autonomous/save-202229.log
+  - .remember/logs/autonomous/save-202305.log
+  - .remember/logs/autonomous/save-200639.log
+  - .remember/logs/autonomous/save-202620.log
+  - .remember/logs/autonomous/save-200436.log
+  - .remember/logs/autonomous/save-203207.log
+  - .remember/logs/autonomous/save-201948.log
+  - .remember/logs/autonomous/save-200218.log
+  - .remember/logs/autonomous/save-200712.log
+  - .remember/logs/autonomous/save-192918.log
+  - .remember/logs/autonomous/save-192953.log
+  - .remember/logs/autonomous/save-194125.log
+  - .remember/logs/autonomous/save-202628.log
+  - .spectra.yaml
+  - Sources/CheDuckDBMCP/DocsManager/SearchEngine.swift
+-->

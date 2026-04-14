@@ -6,7 +6,7 @@ public class CheDuckDBMCPServer {
     private let server: Server
     private let transport: StdioTransport
     private let docsManager = DocsManager()
-    private let searchEngine = SearchEngine()
+    private var searchEngine = SearchEngine()
     private let databaseManager = DatabaseManager()
     private let resultFormatter = ResultFormatter()
 
@@ -26,8 +26,10 @@ public class CheDuckDBMCPServer {
 
         transport = StdioTransport()
 
-        // Initialize documentation
+        // Initialize documentation and build search index
         try await docsManager.initialize()
+        let allSections = await docsManager.getAllSections()
+        searchEngine.buildIndex(sections: allSections)
 
         // Register handlers
         await registerHandlers()
@@ -383,7 +385,7 @@ public class CheDuckDBMCPServer {
             limit = l
         }
 
-        let results = await docsManager.search(query: query, mode: mode, limit: limit)
+        let results = searchEngine.searchWithTFIDF(query: query, mode: mode, limit: limit)
         return formatSearchResultsAsJSON(results)
     }
 
@@ -493,15 +495,19 @@ public class CheDuckDBMCPServer {
 
     private func handleRefreshDocs() async throws -> String {
         try await docsManager.refresh()
+
+        // Rebuild search index
+        let allSections = await docsManager.getAllSections()
+        searchEngine.buildIndex(sections: allSections)
+
         let info = await docsManager.getDocInfo()
 
         return """
         {
             "success": true,
             "message": "Documentation refreshed successfully",
-            "section_count": \(info.sectionCount),
-            "content_size": \(info.contentSize),
-            "updated_at": "\(info.lastUpdated?.ISO8601Format() ?? "unknown")"
+            "total_section_count": \(info.totalSectionCount),
+            "sources_loaded": \(info.sources.count)
         }
         """
     }

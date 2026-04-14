@@ -19,6 +19,9 @@ public actor DatabaseManager {
 
     public init() {}
 
+    /// Pinned duckdb-swift revision for version reporting
+    static let swiftBindingRevision = "d90cf8d"
+
     /// Connect to a DuckDB database
     /// - Parameters:
     ///   - path: Database file path. nil for in-memory database.
@@ -29,13 +32,18 @@ public actor DatabaseManager {
 
         do {
             if let path = path {
-                // File-based database - convert String to URL
+                // Storage version compatibility check
+                if let versionInfo = self.readStorageVersion(at: path) {
+                    // Log version for diagnostics; actual compatibility is enforced by DuckDB itself
+                    FileHandle.standardError.write(Data("[INFO] Database storage version: \(versionInfo)\n".utf8))
+                }
+
                 let fileURL = URL(fileURLWithPath: path)
                 let store = try Database.Store.file(at: fileURL)
                 let config = Database.Configuration()
                 database = try Database(store: store, configuration: config)
             } else {
-                // In-memory database
+                // In-memory database — skip version check
                 database = try Database(store: .inMemory)
             }
 
@@ -43,8 +51,31 @@ public actor DatabaseManager {
             currentPath = path
             isReadOnly = readOnly
         } catch {
-            throw DatabaseError.connectionFailed(error.localizedDescription)
+            // Graceful handling of version mismatch (error code 5 = IO error)
+            let errorMsg = error.localizedDescription
+            if errorMsg.contains("error 5") || errorMsg.contains("IO Error") || errorMsg.contains("storage version") {
+                throw DatabaseError.storageVersionMismatch(
+                    details: errorMsg,
+                    suggestion: "The database file was created with a newer DuckDB version. Upgrade che-duckdb-mcp or use the DuckDB CLI to export/re-import the data."
+                )
+            }
+            throw DatabaseError.connectionFailed(errorMsg)
         }
+    }
+
+    /// Read storage format version from a .duckdb file header
+    /// Returns a description string or nil if the file can't be read
+    private func readStorageVersion(at path: String) -> String? {
+        guard let fileHandle = FileHandle(forReadingAtPath: path) else { return nil }
+        defer { fileHandle.closeFile() }
+
+        // DuckDB storage version is at offset 0x30 (48 bytes)
+        fileHandle.seek(toFileOffset: 0x30)
+        let data = fileHandle.readData(ofLength: 8)
+        guard data.count >= 8 else { return nil }
+
+        let version = data.withUnsafeBytes { $0.load(as: UInt64.self) }
+        return "v\(version)"
     }
 
     /// Disconnect from current database
@@ -272,6 +303,7 @@ public actor DatabaseManager {
 
         return DatabaseInfo(
             version: version,
+            swiftBindingRevision: Self.swiftBindingRevision,
             path: currentPath,
             isInMemory: currentPath == nil,
             isReadOnly: isReadOnly,
@@ -448,6 +480,7 @@ public struct ColumnInfo: Codable, Sendable {
 /// Database information
 public struct DatabaseInfo: Codable, Sendable {
     public let version: String
+    public let swiftBindingRevision: String
     public let path: String?
     public let isInMemory: Bool
     public let isReadOnly: Bool
@@ -472,6 +505,7 @@ public enum DatabaseError: Error, LocalizedError {
     case queryNotAllowed(String)
     case readOnlyViolation
     case invalidParameter(String)
+    case storageVersionMismatch(details: String, suggestion: String)
 
     public var errorDescription: String? {
         switch self {
@@ -489,6 +523,8 @@ public enum DatabaseError: Error, LocalizedError {
             return "Cannot execute write operations in read-only mode"
         case .invalidParameter(let msg):
             return "Invalid parameter: \(msg)"
+        case .storageVersionMismatch(let details, let suggestion):
+            return "Storage version mismatch: \(details). \(suggestion)"
         }
     }
 }

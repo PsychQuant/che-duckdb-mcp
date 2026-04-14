@@ -9,3 +9,6 @@ Package.resolved
 
 # MCPB package
 mcpb/*.mcpb
+.spectra/
+openspec/.vector-search.db*
+references/
