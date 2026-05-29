@@ -194,9 +194,9 @@ id,name
 
 ## 技術細節
 
-- **目前版本**：v2.0.0
+- **目前版本**：v2.3.0
 - **框架**：[MCP Swift SDK](https://github.com/modelcontextprotocol/swift-sdk) v0.12.0
-- **DuckDB 綁定**：[duckdb-swift](https://github.com/duckdb/duckdb-swift) pinned revision `d90cf8d`（DuckDB v1.5.0-dev）
+- **DuckDB 綁定**：[duckdb-swift](https://github.com/duckdb/duckdb-swift) pinned revision `4d9fb7c`（DuckDB v1.6.0-dev3343 — 可讀取 R duckdb v1.5.2 寫入的資料庫）
 - **傳輸方式**：stdio
 - **平台需求**：macOS 13.0+
 - **工具數量**：14 個（8 文檔 + 6 資料庫）

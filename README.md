@@ -194,9 +194,9 @@ id,name
 
 ## Technical Details
 
-- **Current Version**: v2.0.0
+- **Current Version**: v2.3.0
 - **Framework**: [MCP Swift SDK](https://github.com/modelcontextprotocol/swift-sdk) v0.12.0
-- **DuckDB Binding**: [duckdb-swift](https://github.com/duckdb/duckdb-swift) pinned revision `d90cf8d` (DuckDB v1.5.0-dev)
+- **DuckDB Binding**: [duckdb-swift](https://github.com/duckdb/duckdb-swift) pinned revision `4d9fb7c` (DuckDB v1.6.0-dev3343 — reads DBs written by R duckdb v1.5.2)
 - **Transport**: stdio
 - **Platform**: macOS 13.0+ (Ventura and later)
 - **Tools**: 14 tools (8 documentation + 6 database)

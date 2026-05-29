@@ -53,7 +53,7 @@ DuckDB 每個大版本更新 storage format，**不向後相容**。
 | 項目 | 說明 |
 |------|------|
 | `duckdb-swift` 版本策略 | **Pinned revision**（不追 main branch） |
-| 目前 pinned revision | `d90cf8d`（查看 `Package.swift`） |
+| 目前 pinned revision | `4d9fb7c`（duckdb-swift v1.6.0-dev3343；查看 `Package.swift`） |
 | 版本不匹配症狀 | `storageVersionMismatch` 結構化錯誤 |
 
 ### 版本 pin 策略
