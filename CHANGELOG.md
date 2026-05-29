@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-05-29
+
+### Changed
+- Bump embedded DuckDB engine from `v1.5.0-dev8547` (revision `d90cf8d`) to **`v1.6.0-dev3343`** (revision `4d9fb7c`) so the MCP can read `.duckdb` files written by the R `duckdb` package v1.5.2 (the `ai_martech` pipeline writer). DuckDB storage is forward-incompatible; the embedded engine must track the writer. Fixes PsychQuant/che-duckdb-mcp#2.
+- Updated `swiftBindingRevision` constant (reported by `db_info`) to `4d9fb7c`.
+
+### Notes
+- duckdb-swift has no stable `v1.5.2` tag (tags jump `v1.5.0-dev*` → `v1.6.0-dev*`). The originally-targeted `v1.6.0-dev6343` does **not** compile with the current toolchain (Apple clang 21 / macOS 26 SDK): that tag amalgamates the vendored ICU extension into unity-build files where `utmscale.cpp`'s `#define milliseconds/seconds/...` (no `#undef`) leak into `timezone.h`/`simpletz.h` parameter names. `v1.6.0-dev3343` is the same v1.6.0-dev engine line (newer than 1.5.2), compiles ICU per-file, and builds + verifies cleanly.
+- Forward-compat reminder: the embedded engine must track whatever writer produces the DBs it reads (DuckDB storage is forward-incompatible).
+
 ## [2.2.0] - 2026-04-14
 
 ### Added

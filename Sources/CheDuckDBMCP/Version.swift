@@ -3,7 +3,7 @@ import Foundation
 /// Centralized version management for CheDuckDBMCP
 public enum AppVersion {
     /// Current version
-    public static let current = "2.2.0"
+    public static let current = "2.3.0"
 
     /// Application name (used in MCP server registration)
     public static let name = "che-duckdb-mcp"
