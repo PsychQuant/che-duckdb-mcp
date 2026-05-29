@@ -20,7 +20,8 @@ public actor DatabaseManager {
     public init() {}
 
     /// Pinned duckdb-swift revision for version reporting
-    static let swiftBindingRevision = "d90cf8d"
+    /// Tag v1.6.0-dev3343 (commit 4d9fb7c) — engine newer than R duckdb 1.5.2 writer
+    static let swiftBindingRevision = "4d9fb7c"
 
     /// Extract a human-readable message from a DuckDB error.
     ///

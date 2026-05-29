@@ -8,7 +8,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/modelcontextprotocol/swift-sdk.git", from: "0.12.0"),
-        .package(url: "https://github.com/duckdb/duckdb-swift.git", revision: "d90cf8d1ecf8575a5370b2a5c297b45befec68ed")
+        .package(url: "https://github.com/duckdb/duckdb-swift.git", revision: "4d9fb7c8ed24610dac96e82b0901b6d3904fc3a8")
     ],
     targets: [
         .executableTarget(
