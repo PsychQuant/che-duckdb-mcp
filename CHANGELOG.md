@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Manifest `display_name` — removed literal `&`** (`"DuckDB Documentation & Database"` → `"DuckDB Documentation and Database"`). A literal `&` (ampersand) in `mcpb/manifest.json` `display_name` makes Claude Desktop 1.18286.0's tool-injection layer silently drop the **entire** server from every conversation — handshake + `tools/list` complete but no tool is injected, and nothing surfaces in any log. Root-caused and confirmed by single-variable intervention in the sibling che-ical-mcp (PsychQuant/che-ical-mcp#166); this server carried the same landmine (found via a cross-che-mcps sweep) but is not currently Desktop-installed, so it was pre-emptively fixed before it could impact users.
+
 ## [2.3.0] - 2026-05-29
 
 ### Changed
